@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Получение токена бота из переменных среды
-const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
+const BOT_TOKEN = 'process.env.TCC_BOT_TOKEN';
 
 // ID вашего канала
 const CHANNEL_ID = '@-1002058965646';
