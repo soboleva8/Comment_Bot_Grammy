@@ -1,57 +1,47 @@
 import express from 'express';
-
-const app = express()
-const PORT = 3000
-
-app.get('/', (req, res) => {
-    res.send('Hello s8')
-})
-
-app.listen(PORT, () => console.log(`My server is running on port ${PORT}`))
-
-import { Bot, GrammyError } from 'grammy';
+import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
+const app = express();
+const PORT = 3000;
+
+app.get('/', (req, res) => {
+    res.send('Hello s8');
+});
+
+app.listen(PORT, () => console.log(`My server is running on port ${PORT}`));
+
+import { Bot, GrammyError } from 'grammy';
+
 // Получение токена бота из переменных среды
-const BOT_TOKEN = 'process.env.TCC_BOT_TOKEN';
+const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
 
 // ID вашего канала
-const CHANNEL_ID = '@-1002058965646';
+const CHANNEL_ID = '-1002058965646';
 
-// Создание экземпляра бота
-const bot = new Bot(BOT_TOKEN);
+// Функция для отправки запросов к Telegram Bot API
+async function sendTelegramRequest(method, data = {}) {
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/${method}`;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    return await response.json();
+}
 
-// Обработка ошибок
-bot.catch((err) => {
-    if (err instanceof GrammyError) {
-        console.error(`Ошибка в Telegram API: ${err.description}`);
-    } else {
-        console.error('Необработанная ошибка:', err);
-    }
-});
+// Функция для получения истории сообщений из канала
+async function getChannelMessages() {
+    const messages = await sendTelegramRequest('getChatHistory', {
+        chat_id: CHANNEL_ID,
+    });
+    // Обработка полученных сообщений
+    console.log('Получена история сообщений из канала:', messages);
+}
 
-// Обработка новых сообщений из определенного канала
-bot.on('message', async (ctx) => {
-    // Если сообщение пришло из вашего канала
-    if (ctx.chat.id === CHANNEL_ID) {
-        console.log(`Новое сообщение в вашем канале: ${ctx.message.text}`);
-        
-        // Здесь вы можете добавить свой код для реагирования на сообщение из канала
-        // Например, можно отправить комментарий в ответ на сообщение
-        try {
-            await ctx.reply('Привет! Это мой ответ на ваше сообщение.');
-        } catch (error) {
-            console.error('Ошибка при отправке ответа:', error);
-        }
-    }
-});
-
-// Установка вебхука для получения обновлений
-bot.start({
-    webhook: {
-        domain: process.env.WEBHOOK_DOMAIN,
-        port: parseInt(process.env.WEBHOOK_PORT),
-        path: process.env.WEBHOOK_PATH,
-    },
-});
+// Запуск получения истории сообщений из канала
+getChannelMessages();
