@@ -3,25 +3,31 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import { Bot } from 'grammy';
 
+// Загружаем переменные среды из файла .env
 dotenv.config();
 
+// Создаем экземпляр приложения Express
 const app = express();
 const PORT = 3000;
 
+// Определяем маршрут для корневого URL
 app.get('/', (req, res) => {
     res.send('Hello s8');
 });
 
+// Запускаем сервер Express на порту 3000
 app.listen(PORT, () => console.log(`My server is running on port ${PORT}`));
 
 // Получение токена бота из переменных среды
-const BOT_TOKEN = '6824209048:AAGjezibRtrTdhbc7sO83RQVNf26bb2yTCA';
+const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
 
 // ID вашего канала
-const CHANNEL_ID = '@-1002058965646';
+const CHANNEL_ID = '@-1002131752207';
 
+// Создаем экземпляр бота на основе полученного токена
 const bot = new Bot(BOT_TOKEN);
 
+// Функция для отправки запросов к API Telegram
 async function sendTelegramRequest(method, data = {}) {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/${method}`;
     const response = await fetch(url, {
@@ -34,17 +40,26 @@ async function sendTelegramRequest(method, data = {}) {
     return await response.json();
 }
 
+// Инициализация переменной для отслеживания последнего обновления
 let lastUpdateId = 0;
 
+// Функция для проверки канала на новые посты
 async function checkChannelForNewPosts() {
     try {
-        await bot.init(); // Инициализация информации о боте
+        // Инициализируем информацию о боте
+        await bot.init();
+
+        // Получаем обновления из канала Telegram
         const updates = await sendTelegramRequest('getUpdates', {
             channel_id: CHANNEL_ID,
             offset: lastUpdateId + 1,
         });
+
+        // Проверяем, что обновления получены успешно
         if (updates && updates.ok) {
             const newPosts = updates.result;
+
+            // Обрабатываем каждый новый пост
             for (const post of newPosts) {
                 if (
                     post &&
@@ -64,6 +79,7 @@ async function checkChannelForNewPosts() {
                         // Отправляем первый комментарий под каждым новым постом
                         const messageId = post.channel_post.message_id;
                         const chatId = post.channel_post.chat.id;
+
                         async function sendCommentToChannel(messageId, chatId, text) {
                             try {
                                 await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId });
@@ -72,7 +88,7 @@ async function checkChannelForNewPosts() {
                                 console.error('Ошибка при добавлении комментария:', error);
                             }
                         }
-                        await sendCommentToChannel(messageId, chatId, 'Ваш комментарий здесь');
+                        await sendCommentToChannel(messageId, chatId, 'Привет, это Бот. Кто не курит и не пьёт, тот здоровеньким умрёт.');
                     }
                 } else {
                     console.error('Некорректные данные о посте:', post);
