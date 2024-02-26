@@ -22,7 +22,7 @@ app.listen(PORT, () => console.log(`My server is running on port ${PORT}`));
 const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
 
 // ID вашего канала
-const CHANNEL_ID = '@-1002131752207';
+const CHANNEL_ID = '@-1002058965646';
 
 // Создаем экземпляр бота на основе полученного токена
 const bot = new Bot(BOT_TOKEN);
@@ -40,10 +40,20 @@ async function sendTelegramRequest(method, data = {}) {
     return await response.json();
 }
 
+async function sendCommentToChannel(chatId, messageId, text) {
+    try {
+        // Отправляем сообщение с комментарием, указывая ID сообщения, к которому добавляется комментарий
+        await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId });
+
+        console.log('Комментарий успешно добавлен!');
+    } catch (error) {
+        console.error('Ошибка при добавлении комментария:', error);
+    }
+}
+
 // Инициализация переменной для отслеживания последнего обновления
 let lastUpdateId = 0;
 
-// Функция для проверки канала на новые посты
 async function checkChannelForNewPosts() {
     try {
         // Инициализируем информацию о боте
@@ -54,48 +64,52 @@ async function checkChannelForNewPosts() {
             channel_id: CHANNEL_ID,
             offset: lastUpdateId + 1,
         });
-
+        
         // Проверяем, что обновления получены успешно
         if (updates && updates.ok) {
             const newPosts = updates.result;
-
+            
             // Обрабатываем каждый новый пост
             for (const post of newPosts) {
                 if (
                     post &&
-                    post.channel_post &&
-                    post.channel_post.message_id &&
-                    post.channel_post.chat &&
-                    post.channel_post.chat.id &&
-                    post.channel_post.sender_chat &&
-                    post.channel_post.sender_chat.id
+                    post.message &&
+                    post.message.message_id &&
+                    post.message.forward_from_chat &&
+                    post.message.forward_from_chat.type === 'channel'
                 ) {
-                    // Получение информации о боте
+                    // Получаем информацию о боте
                     const botInfo = await bot.api.getMe();
                     const botId = botInfo.id;
-
+                    
                     // Проверяем, отправлено ли сообщение ботом
-                    if (post.channel_post.sender_chat.id !== botId) {
-                        // Отправляем первый комментарий под каждым новым постом
-                        const messageId = post.channel_post.message_id;
-                        const chatId = post.channel_post.chat.id;
+                    if (post.message.sender_chat.id !== botId) {
+                        // Отправляем комментарий под каждым новым постом
+                        
+                        const messageId = post.message.message_id;
+                        const chatId = post.message.chat.id;
 
-                        async function sendCommentToChannel(messageId, chatId, text) {
-                            try {
-                                await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId });
-                                console.log('Комментарий успешно добавлен!');
-                            } catch (error) {
-                                console.error('Ошибка при добавлении комментария:', error);
-                            }
-                        }
-                        await sendCommentToChannel(messageId, chatId, 'Привет, это Бот. Кто не курит и не пьёт, тот здоровеньким умрёт.');
+                        const text = 'Привет, это Бот. Кто не курит и не пьёт, тот здоровеньким умрёт';
+                        console.log(chatId, messageId);
+
+                        sendCommentToChannel(chatId, messageId, text);
+
+                        /*try {
+                            await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId });
+                            console.log('Комментарий успешно добавлен!');
+                        } catch (error) {
+                            console.error('Ошибка при добавлении комментария:', error);
+                        }*/
                     }
+                
                 } else {
                     console.error('Некорректные данные о посте:', post);
                 }
+                // Обновляем lastUpdateId
                 lastUpdateId = Math.max(lastUpdateId, post.update_id);
             }
         }
+        
     } catch (error) {
         console.error('Ошибка при проверке канала на новые посты:', error);
     }
@@ -105,14 +119,3 @@ async function checkChannelForNewPosts() {
 checkChannelForNewPosts();
 
 setInterval(() => checkChannelForNewPosts(), 5000); // Проверяем канал на новые посты каждые 5 секунд
-
-/*async function sendCommentToChannel(messageId, chatId, text) {
-    try {
-        await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId });
-        console.log('Комментарий успешно добавлен!');
-    } catch (error) {
-        console.error('Ошибка при добавлении комментария:', error);
-    }
-}
-await sendCommentToChannel(messageId, chatId, 'Это первый комментарий!');
-*/
