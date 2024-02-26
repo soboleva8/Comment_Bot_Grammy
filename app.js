@@ -43,7 +43,7 @@ async function sendTelegramRequest(method, data = {}) {
 async function sendCommentToChannel(chatId, messageId, text) {
     try {
         // Отправляем сообщение с комментарием, указывая ID сообщения, к которому добавляется комментарий
-        await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId });
+        await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId, parse_mode: 'HTML' });
 
         console.log('Комментарий успешно добавлен!');
     } catch (error) {
@@ -89,7 +89,7 @@ async function checkChannelForNewPosts() {
                         const messageId = post.message.message_id;
                         const chatId = post.message.chat.id;
 
-                        const text = 'Привет, это Бот. Кто не курит и не пьёт, тот здоровеньким умрёт';
+                        const text = '📜<code>Правила поведения в комментариях:\n — Не оскорблять других участников;\n — Не обсуждать политику;\n — Не отправлять контент 18+;\n — Не рекламировать другие каналы;\n — Не быть долбоёбом.</code>';
                         console.log(chatId, messageId);
 
                         sendCommentToChannel(chatId, messageId, text);
