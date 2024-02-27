@@ -22,7 +22,7 @@ app.listen(PORT, () => console.log(`My server is running on port ${PORT}`));
 const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
 
 // ID вашего канала
-const CHANNEL_ID = '@-1002058965646';
+const CHANNEL_ID = -1002058965646;
 
 // Создаем экземпляр бота на основе полученного токена
 const bot = new Bot(BOT_TOKEN);
@@ -75,8 +75,8 @@ async function checkChannelForNewPosts() {
                     post &&
                     post.message &&
                     post.message.message_id &&
-                    post.message.forward_from_chat &&
-                    post.message.forward_from_chat.type === 'channel'
+                    post.message.sender_chat &&
+                    post.message.sender_chat.id === CHANNEL_ID
                 ) {
                     // Получаем информацию о боте
                     const botInfo = await bot.api.getMe();
