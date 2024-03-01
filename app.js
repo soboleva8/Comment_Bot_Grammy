@@ -6,6 +6,7 @@ import { Bot } from 'grammy';
 // Загружаем переменные среды из файла .env
 dotenv.config();
 
+/*
 // Создаем экземпляр приложения Express
 const app = express();
 const PORT = 3000;
@@ -17,13 +18,13 @@ app.get('/', (req, res) => {
 
 // Запускаем сервер Express на порту 3000
 app.listen(PORT, () => console.log(`My server is running on port ${PORT}`));
-
+*/
 // Получение токена бота из переменных среды
 const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
 
 // ID вашего канала
-const CHANNEL_ID = -1002058965646;
-
+const CHANNEL_ID = +process.env.CHANNEL_ID;
+console.log(CHANNEL_ID);
 // Создаем экземпляр бота на основе полученного токена
 const bot = new Bot(BOT_TOKEN);
 
