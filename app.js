@@ -6,25 +6,13 @@ import { Bot } from 'grammy';
 // Загружаем переменные среды из файла .env
 dotenv.config();
 
-/*
-// Создаем экземпляр приложения Express
-const app = express();
-const PORT = 3000;
-
-// Определяем маршрут для корневого URL
-app.get('/', (req, res) => {
-    res.send('Hello s8');
-});
-
-// Запускаем сервер Express на порту 3000
-app.listen(PORT, () => console.log(`My server is running on port ${PORT}`));
-*/
 // Получение токена бота из переменных среды
 const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
 
 // ID вашего канала
 const CHANNEL_ID = +process.env.CHANNEL_ID;
 console.log(CHANNEL_ID);
+
 // Создаем экземпляр бота на основе полученного токена
 const bot = new Bot(BOT_TOKEN);
 
@@ -41,6 +29,7 @@ async function sendTelegramRequest(method, data = {}) {
     return await response.json();
 }
 
+//функция отправки комментария
 async function sendCommentToChannel(chatId, messageId, text) {
     try {
         // Отправляем сообщение с комментарием, указывая ID сообщения, к которому добавляется комментарий
@@ -73,11 +62,8 @@ async function checkChannelForNewPosts() {
             // Обрабатываем каждый новый пост
             for (const post of newPosts) {
                 if (
-                    post &&
-                    post.message &&
-                    post.message.message_id &&
-                    post.message.sender_chat &&
-                    post.message.sender_chat.id === CHANNEL_ID
+                    post?.message?.message_id &&
+                    post?.message?.sender_chat?.id === CHANNEL_ID
                 ) {
                     // Получаем информацию о боте
                     const botInfo = await bot.api.getMe();
@@ -86,37 +72,33 @@ async function checkChannelForNewPosts() {
                     // Проверяем, отправлено ли сообщение ботом
                     if (post.message.sender_chat.id !== botId) {
                         // Отправляем комментарий под каждым новым постом
-                        
                         const messageId = post.message.message_id;
                         const chatId = post.message.chat.id;
-
-                        const text = '📜<code>Правила поведения в комментариях:\n — Не оскорблять других участников;\n — Не обсуждать политику;\n — Не отправлять контент 18+;\n — Не рекламировать другие каналы;\n — Не быть долбоёбом.</code>';
+                        
+                        //получение текста комментария из переменной окружения
+                        const My_Text_JSON = process.env.COMMENT_TEXT_JSON;
+                        //разбор JSON-строки
+                        const data = JSON.parse(My_Text_JSON);
+                        //получение текста для комментария согласно правилам форматирования
+                        const text = data.comment_rules;
+                        
+                        //проверка
                         console.log(chatId, messageId);
 
                         sendCommentToChannel(chatId, messageId, text);
-
-                        /*try {
-                            await bot.api.sendMessage(chatId, text, { reply_to_message_id: messageId });
-                            console.log('Комментарий успешно добавлен!');
-                        } catch (error) {
-                            console.error('Ошибка при добавлении комментария:', error);
-                        }*/
                     }
-                
                 } else {
                     console.error('Некорректные данные о посте:', post);
                 }
                 // Обновляем lastUpdateId
                 lastUpdateId = Math.max(lastUpdateId, post.update_id);
             }
-        }
-        
+        }  
     } catch (error) {
         console.error('Ошибка при проверке канала на новые посты:', error);
     }
 }
 
-// Инициализация переменной lastUpdateId
-checkChannelForNewPosts();
+checkChannelForNewPosts(); // Инициализация переменной lastUpdateId
 
 setInterval(() => checkChannelForNewPosts(), 5000); // Проверяем канал на новые посты каждые 5 секунд
