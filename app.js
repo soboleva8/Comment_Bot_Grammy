@@ -55,7 +55,9 @@ bot.on('message', async (ctx) => {
         
         //Отправка комментария 
         await sendCommentToChannel(commentChatId, messageIdFromSC, textMessage);
-    }
+    } else {
+          console.error('сообщение не из того канал или вы бот');
+        }
 });
 
 bot.start();
