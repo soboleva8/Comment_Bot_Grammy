@@ -1,25 +1,24 @@
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import { Bot } from 'grammy';
+import { cleanEnv, str, num} from 'envalid'
 
 // Загружаем переменные среды из файла .env
 dotenv.config();
 
+const env = cleanEnv( process.env, {
+    TCC_BOT_TOKEN: str(),
+    COMMENT_TEXT: str(),
+    CHANNEL_ID: num(),
+})
+
 // Получение токена бота из переменных среды
-const BOT_TOKEN = process.env.TCC_BOT_TOKEN;
+const BOT_TOKEN = env.TCC_BOT_TOKEN;
 
 // ID вашего канала
-const CHANNEL_ID = +process.env.CHANNEL_ID;
-console.log(CHANNEL_ID);
+const CHANNEL_ID = env.CHANNEL_ID;
 
-//получение текста комментария из переменной окружения
-const My_Text_JSON = process.env.COMMENT_TEXT_JSON;
-        
-//разбор JSON-строки
-const data = JSON.parse(My_Text_JSON);
-
-//получение текста для комментария согласно правилам форматирования
-const textMessage = data.comment_rules;
+const textMessage = env.COMMENT_TEXT;
 
 // Создаем экземпляр бота на основе полученного токена
 const bot = new Bot(BOT_TOKEN);
@@ -36,27 +35,18 @@ async function sendCommentToChannel(chatId, messageId, text) {
 }
 
 bot.on('message', async (ctx) => {
-    console.log(ctx.senderChat.id);
-    console.dir(ctx.message, { depth: null });
 
     // Проверяем, что сообщение пришло из нужного чата
     if (ctx.message.sender_chat.id === CHANNEL_ID && !ctx.message.from.is_bot){
 
-        //получение значения ID чата куда бот шлёт комментарий
-        const commentChatId = ctx.chat.id;
-
         //полечение значения ID собщения из канала на которое бот отвечает комментарием
         const messageIdFromSC = ctx.message.message_id;
-
-        //проверка значений
-        console.log(ctx.senderChat.id);
-        console.dir(ctx.message, { depth: null });
         
         //Отправка комментария 
-        await sendCommentToChannel(commentChatId, messageIdFromSC, textMessage);
+        await sendCommentToChannel(ctx.chat.id, messageIdFromSC, textMessage);
     } else {
-          console.error('сообщение не из того канал или вы бот');
-        }
+        console.error('сообщение не из того канал или вы бот');
+    }
 });
 
 bot.start();
